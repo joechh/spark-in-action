@@ -36,7 +36,7 @@ object App {
     employees
 
     //Alternative
-    //Source.fromFile(filePath).getLines().map(_.trim).toSet
+    Source.fromFile(filePath).getLines().map(_.trim).toSet
 
   }
 
@@ -63,6 +63,7 @@ object App {
       .groupBy(pushes("actor.login"))
       .count()
       .orderBy('count.desc)
+
     ordered.show(5)
 
     val employees = loadFromFile(homeDir + "/first-edition/ch03/ghEmployees.txt")
@@ -74,6 +75,12 @@ object App {
     ordered.select("*")
       .where("isEmpUdf(login)=True")
       .show(5)
+
+    //print function list
+    spark.catalog
+      .listFunctions
+      .filter('name like "%isEmpUdf%")
+      .show(false)
 
 
   }
