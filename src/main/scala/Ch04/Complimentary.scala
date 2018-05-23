@@ -40,7 +40,6 @@ object Complimentary {
 
 
   def main(args: Array[String]): Unit = {
-
     val spark = SparkSession
       .builder()
       .master("local[*]")
@@ -48,7 +47,6 @@ object Complimentary {
       .getOrCreate()
 
     val tranFile = spark.sparkContext.textFile("src/main/resources/ch04/ch04_data_transactions.txt")
-
     val transData: RDD[Array[String]] = tranFile.map(_.split("#"))
     var transByCust: RDD[(Int, Array[String])] = transData.map(trans => (trans(2).toInt, trans))
 
@@ -94,7 +92,6 @@ object Complimentary {
 
     prods.collect().foreach(println)
     println(prods.getNumPartitions)
-
     println(prods.partitioner)
     println(prods.map(_ => "").partitioner)
 
@@ -103,11 +100,8 @@ object Complimentary {
       res
     }, true).partitioner)
 
-
     println(prods.mapPartitions(it => {
       it.map(_ => "")
-
-
     }, true).partitioner)
 
 
