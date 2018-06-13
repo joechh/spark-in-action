@@ -8,7 +8,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.streaming.dstream.DStream
 import org.apache.spark.streaming.{Milliseconds, Minutes, StreamingContext}
 
-object StatefulToKafka {
+object StatefulToKafkaAsync {
 
   def stateSpec: (Seq[Double], Option[Double]) => Option[Double] = {
     (values, total) => {
@@ -104,6 +104,3 @@ object StatefulToKafka {
   }
 
 }
-
-case class Orders(time: java.sql.Timestamp, orderId: Long, clientId: Long,
-                  symbol: String, amount: Int, price: Double, buy: Boolean)

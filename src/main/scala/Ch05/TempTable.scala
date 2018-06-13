@@ -15,10 +15,6 @@ object TempTable {
     postsDf.createOrReplaceTempView("posts_temp")
     postsDf.write.mode(SaveMode.Overwrite).saveAsTable("posts")
     val resultDF = spark.sql("select * from posts")
-    spark.table()
-
-
-
   }
 
 

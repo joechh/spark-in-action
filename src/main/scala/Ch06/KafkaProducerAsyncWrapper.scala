@@ -1,9 +1,8 @@
 package Ch06
 
-import org.apache.kafka.clients.producer.{KafkaProducer, ProducerRecord}
-import org.apache.kafka.common.serialization.StringDeserializer
+import org.apache.kafka.clients.producer.{Callback, KafkaProducer, ProducerRecord}
 
-case class KafkaProducerWrapper(brokerList: String) {
+case class KafkaProducerAsyncWrapper(brokerList: String) {
   val producerProps = {
     val prop = new java.util.Properties()
     prop.put("bootstrap.servers", brokerList)
@@ -15,14 +14,22 @@ case class KafkaProducerWrapper(brokerList: String) {
   }
   val producer = new KafkaProducer[String, String](producerProps)
 
-  def send(topic: String, key: String = null, value: String): Unit = producer.send(new ProducerRecord(topic, key, value))
+  def send(topic: String, key: String = null, value: String): Unit = {
+    val record = new ProducerRecord(topic, key, value)
+    producer.send(record, new ProducerCallback())
+  }
+
+  import org.apache.kafka.clients.producer.RecordMetadata
+
+  private class ProducerCallback extends Callback with Serializable {
+    override def onCompletion(recordMetadata: RecordMetadata, e: Exception): Unit = {
+      if (e != null) e.printStackTrace()
+    }
+  }
 
 }
 
-object KafkaProducerWrapper {
-  var brokerList = ""
-  lazy val instance = new KafkaProducerWrapper(brokerList)
-}
+
 
 
 

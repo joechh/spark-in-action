@@ -1,6 +1,6 @@
 package Ch04
 
-import Ch3.App.spark
+import Ch03.App.spark
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{SaveMode, SparkSession}
 

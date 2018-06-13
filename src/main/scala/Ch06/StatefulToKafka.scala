@@ -2,12 +2,18 @@ package Ch06
 
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
+import java.util.Properties
 
+import org.apache.avro.generic.GenericRecord
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.spark.SparkConf
 import org.apache.spark.streaming.dstream.DStream
+import org.apache.spark.streaming.kafka010.ConsumerStrategies.Subscribe
+import org.apache.spark.streaming.kafka010.KafkaUtils
+import org.apache.spark.streaming.kafka010.LocationStrategies.PreferConsistent
 import org.apache.spark.streaming.{Milliseconds, Minutes, StreamingContext}
 
-object Stateful {
+object StatefulToKafka {
 
   def stateSpec: (Seq[Double], Option[Double]) => Option[Double] = {
     (values, total) => {
@@ -20,10 +26,25 @@ object Stateful {
   }
 
   def main(args: Array[String]): Unit = {
-    val conf = new SparkConf().setMaster("local[*]").setAppName("test")
+    val conf = new SparkConf().setMaster("local[*]").setAppName("statefulApp")
     val ssc = new StreamingContext(conf, Milliseconds(5000))
-    val fileStream = ssc.textFileStream("hdfs://localhost:9000/user/joechh/sparkDir")
-    val orders: DStream[Orders] = parseFileToOrder(fileStream)
+    val kafkaParams = Map[String, Object](
+      "bootstrap.servers" -> "localhost:9092",
+      "key.deserializer" -> classOf[StringDeserializer],
+      "value.deserializer" -> classOf[StringDeserializer],
+      "group.id" -> "joe-subSMT-group01-test06",
+      "auto.offset.reset" -> "earliest",
+      "enable.auto.commit" -> (false: java.lang.Boolean)
+    )
+    val kafkaTopics = Set("orders")
+    val stream = KafkaUtils.createDirectStream[String, String](
+      ssc,
+      PreferConsistent,
+      Subscribe[String, String](kafkaTopics, kafkaParams)
+    )
+
+
+    val orders: DStream[Orders] = parseFileToOrder(stream.map(_.value()))
     val numPerType = orders.map(x => (x.buy, 1)).reduceByKey(_ + _)
     val amountPerClient = orders.map(x => (x.clientId, x.amount * x.price))
     val amountState = amountPerClient.updateStateByKey(stateSpec)
@@ -53,13 +74,19 @@ object Stateful {
       .map(arr => ("TOP5STOCKS", arr.toList))
 
     val finalStream = buySellList.union(top5ClientList).union(top5Stocks)
-    finalStream.print()
-
+    finalStream.foreachRDD { rdd =>
+      rdd.foreachPartition { iter =>
+        KafkaProducerWrapper.brokerList = "localhost:9092"
+        val producer = KafkaProducerWrapper.instance
+        iter.foreach { case (metric, list) =>
+          producer.send("metrics", metric, list.toString)
+        }
+      }
+    }
 
     ssc.checkpoint("hdfs://localhost:9000/user/joechh/sparkCheckDir")
     ssc.start()
     ssc.awaitTermination()
-
   }
 
 

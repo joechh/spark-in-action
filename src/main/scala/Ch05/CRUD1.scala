@@ -31,9 +31,6 @@ object CRUD1 {
 
     postsDf.cache()
     postsDf.unpersist()
-    spark.sqlContext.uncacheTable()
-    spark.sqlContext.clearCache()
-    spark.sqlContext.cacheTable()
 
   }
 

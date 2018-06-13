@@ -1,4 +1,4 @@
-package Ch3
+package Ch03
 
 import org.apache.spark.sql.{DataFrame, Dataset, Row, SparkSession}
 

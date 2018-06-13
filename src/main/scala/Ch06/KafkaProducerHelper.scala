@@ -10,7 +10,6 @@ class KafkaProducerHelper(createProducer: () => KafkaProducer[String, String]) e
 
   def send(topic: String, key: String = null, value: String): Unit = producer.send(new ProducerRecord(topic, key, value))
 }
-
 object KafkaProducerHelper {
 
   def apply(config: Properties): KafkaProducerHelper = {
